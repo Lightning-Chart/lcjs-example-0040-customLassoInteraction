@@ -5,7 +5,7 @@
 const lcjs = require('@arction/lcjs')
 
 // Extract required parts from LightningChartJS.
-const { lightningChart, ColorCSS, PointShape, SolidLine, SolidFill, translatePoint, Themes } = lcjs
+const { lightningChart, ColorCSS, PointShape, SolidLine, SolidFill, Themes } = lcjs
 
 const { createProgressiveTraceGenerator } = require('@arction/xydata')
 
@@ -68,11 +68,7 @@ createProgressiveTraceGenerator()
             if (button !== 0) return
 
             // Translate mouse location to Axis coordinate system.
-            const curLocationAxis = translatePoint(
-                chart.engine.clientLocation2Engine(event.clientX, event.clientY),
-                chart.engine.scale,
-                pointSeries.scale,
-            )
+            const curLocationAxis = chart.translateCoordinate(event, chart.coordsAxis)
 
             // Add location to list of new coordinates and schedule an update to the lasso.
             lassoNewCoordinates.push(curLocationAxis)
