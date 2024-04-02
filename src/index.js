@@ -11,7 +11,7 @@ const { createProgressiveTraceGenerator } = require('@arction/xydata')
 
 const chart = lightningChart()
     .ChartXY({
-        theme: Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined
+        theme: Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined,
     })
     .setTitle('Custom lasso interaction (drag Left mouse button)')
     // Disable default chart interactions with left mouse button.
