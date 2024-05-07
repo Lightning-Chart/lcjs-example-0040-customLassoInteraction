@@ -1,147 +1,130 @@
-/*
- * LightningChartJS example that showcases a simple XY line series.
- */
 // Import LightningChartJS
 const lcjs = require('@arction/lcjs')
 
 // Extract required parts from LightningChartJS.
-const { lightningChart, ColorCSS, PointShape, SolidLine, SolidFill, Themes } = lcjs
+const { lightningChart, emptyFill, emptyLine, AutoCursorModes, Themes } = lcjs
 
-const { createProgressiveTraceGenerator } = require('@arction/xydata')
+const exampleContainer = document.getElementById('chart') || document.body
+if (exampleContainer === document.body) {
+    exampleContainer.style.width = '100vw'
+    exampleContainer.style.height = '100vh'
+    exampleContainer.style.margin = '0px'
+}
+exampleContainer.style.display = 'flex'
+exampleContainer.style.flexDirection = 'row'
+const containerChart1 = document.createElement('div')
+const containerChart2 = document.createElement('div')
+exampleContainer.append(containerChart1)
+exampleContainer.append(containerChart2)
+containerChart1.style.flexGrow = '1'
+containerChart1.style.height = '100%'
+containerChart2.style.width = '50%'
+containerChart2.style.height = '100%'
+containerChart2.style.display = 'none'
 
-const chart = lightningChart({
+const lc = lightningChart({
             resourcesBaseUrl: new URL(document.head.baseURI).origin + new URL(document.head.baseURI).pathname + 'resources/',
         })
+const chart = lc
     .ChartXY({
+        container: containerChart1,
         theme: Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined,
     })
-    .setTitle('Custom lasso interaction (drag Left mouse button)')
-    // Disable default chart interactions with left mouse button.
-    .setMouseInteractionRectangleFit(false)
-    .setMouseInteractionRectangleZoom(false)
+    .setAutoCursorMode(AutoCursorModes.disabled)
+    .setTitle('Click to select points, close selection by clicking on polygon corner')
+const dataGrid = lc
+    .DataGrid({
+        container: containerChart2,
+        // theme: Themes.darkGold
+    })
+    .setTitle('Selected samples')
 
-// Add series for displaying data set.
-const pointSeries = chart.addPointSeries({
-    pointShape: PointShape.Circle,
+const data = new Array(5000).fill(0).map((_, i) => ({ id: i, x: Math.random() ** 2, y: Math.random() ** 1.5 }))
+
+const scatterSeries = chart
+    .addPointLineAreaSeries({ dataPattern: null, sizes: true })
+    .setAreaFillStyle(emptyFill)
+    .setStrokeStyle(emptyLine)
+    .appendJSON(data)
+    .fill({ size: 3 })
+    .setMouseInteractions(false)
+
+// Disable conflicting built-in interactions
+chart.setMouseInteractionRectangleFit(false).setMouseInteractionRectangleZoom(false)
+chart.onSeriesBackgroundMouseDoubleClick(() => chart.forEachAxis((axis) => axis.fit(false)))
+
+// Add custom lasso polygon interaction using events API and Polygon series
+const polygonSeries = chart.addPolygonSeries({ automaticColorIndex: 2 }).setMouseInteractions(false).setCursorEnabled(false)
+const polygonFigure = polygonSeries.add([]).setFillStyle((fill) => fill.setA(50))
+const polygonMarkers = chart.addPointLineAreaSeries({ dataPattern: null }).setCursorEnabled(false)
+let lassoState
+chart.onSeriesBackgroundMouseMove((_, event) => {
+    if (!lassoState || lassoState.closed) return
+    const coordAxis = chart.translateCoordinate(event, chart.coordsAxis)
+    const polygonPreview = [...lassoState.polygon, coordAxis]
+    polygonFigure.setDimensions(polygonPreview)
+})
+chart.onSeriesBackgroundMouseLeave(() => {
+    if (!lassoState || lassoState.closed) return
+    polygonFigure.setDimensions(lassoState.polygon)
+})
+chart.onSeriesBackgroundMouseClick((_, event) => {
+    // Add coordinate to polygon
+    const coordAxis = chart.translateCoordinate(event, chart.coordsAxis)
+    if (!lassoState || lassoState.closed) {
+        lassoState = { polygon: [coordAxis] }
+        scatterSeries.fill({ size: 3 })
+    } else {
+        lassoState.polygon.push(coordAxis)
+    }
+    polygonFigure.setDimensions(lassoState.polygon)
+    polygonMarkers.appendSample(coordAxis)
+    dataGrid.removeCells()
+})
+polygonMarkers.onMouseClick(() => {
+    // Close polygon
+    lassoState.closed = true
+    polygonFigure.setDimensions(lassoState.polygon)
+    polygonMarkers.clear()
+
+    // Routine for checking if data point is inside a polygon.
+    const coords = lassoState.polygon
+    const xMin = coords.reduce((prev, cur) => Math.min(prev, cur.x), Number.MAX_SAFE_INTEGER)
+    const xMax = coords.reduce((prev, cur) => Math.max(prev, cur.x), -Number.MAX_SAFE_INTEGER)
+    const yMin = coords.reduce((prev, cur) => Math.min(prev, cur.y), Number.MAX_SAFE_INTEGER)
+    const yMax = coords.reduce((prev, cur) => Math.max(prev, cur.y), -Number.MAX_SAFE_INTEGER)
+    const dataPointSizes = new Array(data.length)
+    const dataGridContent = [['ID', 'X', 'Y']]
+    for (let i = 0; i < data.length; i += 1) {
+        const sample = data[i]
+        let insidePolygon = false
+        if (sample.x >= xMin && sample.x <= xMax && sample.y >= yMin && sample.y <= yMax) {
+            if (getIsPointInsidePolygon(sample, coords)) {
+                insidePolygon = true
+            }
+        }
+        dataPointSizes[i] = insidePolygon ? 7 : 3
+        if (insidePolygon) {
+            dataGridContent.push([sample.id, sample.x.toFixed(3), sample.y.toFixed(3)])
+        }
+    }
+    scatterSeries.alterSamples(0, { sizes: dataPointSizes })
+    dataGrid.setTableContent(dataGridContent)
+    containerChart2.style.display = 'block'
 })
 
-// Add another series for displaying highlighted data points.
-const seriesHighlightedPoints = chart
-    .addPointSeries({ pointShape: PointShape.Circle })
-    .setCursorEnabled(false)
-    .setMouseInteractions(false)
-    .setPointFillStyle(new SolidFill({ color: ColorCSS('blue') }))
-
-// Add a Polygon series and 1 polygon figure for displaying "Lasso" on user interactions.
-const polygonSeries = chart.addPolygonSeries().setCursorEnabled(false).setMouseInteractions(false)
-const polygonFigure = polygonSeries
-    .add([])
-    .setFillStyle(new SolidFill({ color: ColorCSS('gray').setA(10) }))
-    .setStrokeStyle(
-        new SolidLine({
-            thickness: 1,
-            fillStyle: new SolidFill({ color: ColorCSS('gray') }),
-        }),
-    )
-    // Hide polygon initially.
-    .setVisible(false)
-
-// Generate random example data.
-createProgressiveTraceGenerator()
-    .setNumberOfPoints(10000)
-    .generate()
-    .toPromise()
-    .then((data) => {
-        pointSeries.add(data)
-
-        // * Add custom interactions to Chart events for lasso data selection interaction *
-
-        // Array that keeps track of current coordinates in polygon figure (lasso).
-        const lassoCheckedCoordinates = []
-        // Separate Array that keeps track of new lasso coordinates, that haven't been checked for covered data points yet.
-        const lassoNewCoordinates = []
-        // Lasso updates are handled after a timeout to avoid cases where the custom interaction code causes the entire chart application to perform bad.
-        // Generally it is not recommended to do heavy calculations directly inside event handlers!
-        let lassoUpdateTimeout = undefined
-
-        // When Left mouse button is dragged inside series area, Lasso should be shown and selected data points highlighted.
-        chart.onSeriesBackgroundMouseDrag((_, event, button) => {
-            // If not left mouse button, don't do anything.
-            if (button !== 0) return
-
-            // Translate mouse location to Axis coordinate system.
-            const curLocationAxis = chart.translateCoordinate(event, chart.coordsAxis)
-
-            // Add location to list of new coordinates and schedule an update to the lasso.
-            lassoNewCoordinates.push(curLocationAxis)
-            // Don't update lasso any more frequently than every 25ms.
-            lassoUpdateTimeout = lassoUpdateTimeout || setTimeout(updateLasso, 25)
-        })
-
-        // Reset previous lasso when mouse drag action is started.
-        chart.onSeriesBackgroundMouseDragStart((_, __, button) => {
-            // If not left mouse button, don't do anything.
-            if (button !== 0) return
-            lassoCheckedCoordinates.length = 0
-            lassoNewCoordinates.length = 0
-            seriesHighlightedPoints.clear()
-            polygonFigure.setVisible(false)
-            pointSeries.setCursorEnabled(false)
-        })
-
-        chart.onSeriesBackgroundMouseDragStop(() => {
-            pointSeries.setCursorEnabled(true)
-        })
-
-        /**
-         * Function which updates the lasso and highlighted points.
-         */
-        const updateLasso = () => {
-            const lassoCheckedCoordinatesLength = lassoCheckedCoordinates.length
-            const lassoNewCoordinatesLength = lassoNewCoordinates.length
-
-            if (lassoNewCoordinatesLength > 0 && lassoCheckedCoordinatesLength + lassoNewCoordinatesLength >= 3) {
-                // * Highlight data points that are inside the lasso area *
-
-                // Intersection checks are always done relative to first polygon coordinate.
-                const triangleA = lassoCheckedCoordinatesLength > 0 ? lassoCheckedCoordinates[0] : lassoNewCoordinates[0]
-                // Consider only new triangles of the lasso coordinates, starting from the last checked coordinate,
-                // and ending with the last new unchecked coordinate.
-                let triangleB =
-                    lassoCheckedCoordinatesLength > 0 ? lassoCheckedCoordinates[lassoCheckedCoordinatesLength - 1] : lassoNewCoordinates[1]
-                for (let iTriangle = 0; iTriangle < lassoNewCoordinates.length; iTriangle += 1) {
-                    const triangleC = lassoNewCoordinates[iTriangle]
-                    for (const point of data) {
-                        if (checkPointInsideTriangle(point, triangleA, triangleB, triangleC)) {
-                            // The data point is inside the lasso -> highlight it.
-                            seriesHighlightedPoints.add(point)
-                        }
-                    }
-                    triangleB = triangleC
-                }
-
-                // Append new coordinates to complete list of lasso coordinates.
-                lassoCheckedCoordinates.push.apply(lassoCheckedCoordinates, lassoNewCoordinates)
-                lassoNewCoordinates.length = 0
-
-                // Ensure lasso is visible.
-                polygonFigure.setVisible(true).setDimensions(lassoCheckedCoordinates)
-            }
-            lassoUpdateTimeout = undefined
-        }
-
-        /**
-         * Highly optimized routine for checking if a XY point is inside a triangle defined by 3 XY points.
-         */
-        const checkPointInsideTriangle = (position, triangleA, triangleB, triangleC) => {
-            const dX = position.x - triangleC.x
-            const dY = position.y - triangleC.y
-            const dX21 = triangleC.x - triangleB.x
-            const dY12 = triangleB.y - triangleC.y
-            const s = dY12 * dX + dX21 * dY
-            const t = (triangleC.y - triangleA.y) * dX + (triangleA.x - triangleC.x) * dY
-            const D = dY12 * (triangleA.x - triangleC.x) + dX21 * (triangleA.y - triangleC.y)
-            if (D < 0) return s <= 0 && t <= 0 && s + t >= D
-            return s >= 0 && t >= 0 && s + t <= D
-        }
-    })
+// https://stackoverflow.com/a/72434617/9288063
+const getIsPointInsidePolygon = (point, vertices) => {
+    const x = point.x
+    const y = point.y
+    let inside = false
+    for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
+        const xi = vertices[i].x,
+            yi = vertices[i].y
+        const xj = vertices[j].x,
+            yj = vertices[j].y
+        const intersect = yi > y != yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi
+        if (intersect) inside = !inside
+    }
+    return inside
+}

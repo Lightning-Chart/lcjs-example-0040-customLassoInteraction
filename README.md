@@ -32,26 +32,15 @@ chart
 ```
 
 And any custom interaction can be implemented with different event subscription methods.
-In this example, `ChartXY.onSeriesBackgroundMouseDrag` is used to hook on to the event when user drags their left mouse button inside the series area.
-`PolygonSeries` are used to draw a _freeform lasso selection_ as the user moves their mouse on the chart.
-
-The data points that are inside the lasso are solved in real-time, and highlighted with a separate `PointSeries`.
-
-![Highlighted lasso selection](./assets/screenshot.png)
+In this example, `ChartXY.onSeriesBackgroundMouseClick` is used to hook on to the event when user clicks mouse button inside the series area.
+`PolygonSeries` are used to draw a _lasso selection_ as the user clicks with mouse on the chart.
+Finally, after user clicks on any existing polygon point to close it, the data points that are inside the lasso are solved and highlighted using edit data API.
 
 This idea of custom interactions can be extended to any application specific dynamic interaction, like deleting selected points, displaying them in a separate chart or moving them - imagination is the limit!
 
-When implementing custom interactions that involve solving a list of data points from some selection - like lasso - optimizing the application side code is very important. Performing heavy computations inside event handlers can block the thread which can make it seem like the chart is not performing well when in reality it is the application code that is bottle-necking the performance.
+See also:
 
-Some rules of thumb for implementing custom interactions:
-
--   **Don't do heavy calculations directly inside event handlers.** Instead, schedule an update using `setTimeout` and prevent recalculations happening more often than necessary. This example limits the lasso update to max. 1 update per 25 milliseconds.
-
--   **Work smart, not hard.** In the case of lasso selection, iterating over a large data set one-by-one and checking which points are inside a _polygon_ can be _really heavy_.
-    Instead, on each update, we only check the new expanded polygon area.
-    In practice, the lasso polygon often has even 1000 coordinates in which case we're skipping 999 iterations of the entire data set every time the lasso is updated.
-
-The code in this example is optimized very well, feel free to reference it in your own custom interaction implementations!
+-   https://lightningchart.com/js-charts/interactive-examples/examples/lcjs-example-0043-customTimeSelectionInteraction.html
 
 
 ## API Links
@@ -87,12 +76,12 @@ Direct developer email support can be purchased through a [Support Plan][4] or b
 © LightningChart Ltd 2009-2022. All rights reserved.
 
 
-[Lightning chart]: https://lightningchart.com/js-charts/api-documentation/v5.1.0/functions/lightningChart-1.html
-[Color factory CSS]: https://lightningchart.com/js-charts/api-documentation/v5.1.0/functions/ColorCSS.html
-[2D Point shape options]: https://lightningchart.com/js-charts/api-documentation/v5.1.0/enums/PointShape.html
-[Solid line style]: https://lightningchart.com/js-charts/api-documentation/v5.1.0/classes/SolidLine.html
-[Solid fill style]: https://lightningchart.com/js-charts/api-documentation/v5.1.0/classes/SolidFill.html
-[Chart XY]: https://lightningchart.com/js-charts/api-documentation/v5.1.0/classes/ChartXY.html
-[Point Series 2D]: https://lightningchart.com/js-charts/api-documentation/v5.1.0/classes/PointSeries.html
-[Polygon Series 2D]: https://lightningchart.com/js-charts/api-documentation/v5.1.0/classes/PolygonSeries.html
+[Lightning chart]: https://lightningchart.com/js-charts/api-documentation/v5.2.0/functions/lightningChart-1.html
+[Color factory CSS]: https://lightningchart.com/js-charts/api-documentation/v5.2.0/functions/ColorCSS.html
+[2D Point shape options]: https://lightningchart.com/js-charts/api-documentation/v5.2.0/enums/PointShape.html
+[Solid line style]: https://lightningchart.com/js-charts/api-documentation/v5.2.0/classes/SolidLine.html
+[Solid fill style]: https://lightningchart.com/js-charts/api-documentation/v5.2.0/classes/SolidFill.html
+[Chart XY]: https://lightningchart.com/js-charts/api-documentation/v5.2.0/classes/ChartXY.html
+[Point Series 2D]: https://lightningchart.com/js-charts/api-documentation/v5.2.0/classes/PointSeries.html
+[Polygon Series 2D]: https://lightningchart.com/js-charts/api-documentation/v5.2.0/classes/PolygonSeries.html
 
