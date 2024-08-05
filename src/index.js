@@ -1,5 +1,5 @@
 // Import LightningChartJS
-const lcjs = require('@arction/lcjs')
+const lcjs = require('@lightningchart/lcjs')
 
 // Extract required parts from LightningChartJS.
 const { lightningChart, emptyFill, emptyLine, AutoCursorModes, Themes } = lcjs
@@ -30,7 +30,7 @@ const chart = lc
         container: containerChart1,
         theme: Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined,
     })
-    .setAutoCursorMode(AutoCursorModes.disabled)
+    .setCursorMode(undefined)
     .setTitle('Click to select points, close selection by clicking on polygon corner')
 const dataGrid = lc
     .DataGrid({
