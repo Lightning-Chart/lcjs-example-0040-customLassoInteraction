@@ -21,18 +21,8 @@ The demo can be used as an example or a seed project. Local execution requires t
 
 This example showcases the creation of a custom user interaction.
 
-By default, dragging left mouse inside the series area, a zoom/fit interaction is activated.
-This default interaction can be disabled:
-
-```js
-chart
-    // Disable default chart interactions with left mouse button.
-    .setMouseInteractionRectangleFit(false)
-    .setMouseInteractionRectangleZoom(false)
-```
-
-And any custom interaction can be implemented with different event subscription methods.
-In this example, `ChartXY.onSeriesBackgroundMouseClick` is used to hook on to the event when user clicks mouse button inside the series area.
+Any custom interaction can be implemented with different event subscription methods.
+In this example, `addEventListener` is used to hook on to the event when user clicks mouse button inside the series area.
 `PolygonSeries` are used to draw a _lasso selection_ as the user clicks with mouse on the chart.
 Finally, after user clicks on any existing polygon point to close it, the data points that are inside the lasso are solved and highlighted using edit data API.
 
@@ -76,12 +66,12 @@ Direct developer email support can be purchased through a [Support Plan][4] or b
 © LightningChart Ltd 2009-2022. All rights reserved.
 
 
-[Lightning chart]: https://lightningchart.com/js-charts/api-documentation/v6.1.0/functions/lightningChart-1.html
-[Color factory CSS]: https://lightningchart.com/js-charts/api-documentation/v6.1.0/functions/ColorCSS.html
-[2D Point shape options]: https://lightningchart.com/js-charts/api-documentation/v6.1.0/enums/PointShape.html
-[Solid line style]: https://lightningchart.com/js-charts/api-documentation/v6.1.0/classes/SolidLine.html
-[Solid fill style]: https://lightningchart.com/js-charts/api-documentation/v6.1.0/classes/SolidFill.html
-[Chart XY]: https://lightningchart.com/js-charts/api-documentation/v6.1.0/classes/ChartXY.html
-[Point Series 2D]: https://lightningchart.com/js-charts/api-documentation/v6.1.0/classes/PointSeries.html
-[Polygon Series 2D]: https://lightningchart.com/js-charts/api-documentation/v6.1.0/classes/PolygonSeries.html
+[Lightning chart]: https://lightningchart.com/js-charts/api-documentation/v7.0.1/functions/lightningChart-1.html
+[Color factory CSS]: https://lightningchart.com/js-charts/api-documentation/v7.0.1/functions/ColorCSS.html
+[2D Point shape options]: https://lightningchart.com/js-charts/api-documentation/v7.0.1/enums/PointShape.html
+[Solid line style]: https://lightningchart.com/js-charts/api-documentation/v7.0.1/classes/SolidLine.html
+[Solid fill style]: https://lightningchart.com/js-charts/api-documentation/v7.0.1/classes/SolidFill.html
+[Chart XY]: https://lightningchart.com/js-charts/api-documentation/v7.0.1/classes/ChartXY.html
+[Point Series 2D]: https://lightningchart.com/js-charts/api-documentation/v7.0.1/classes/PointSeries.html
+[Polygon Series 2D]: https://lightningchart.com/js-charts/api-documentation/v7.0.1/classes/PolygonSeries.html
 

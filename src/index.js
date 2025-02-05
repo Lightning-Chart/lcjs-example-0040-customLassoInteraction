@@ -47,28 +47,27 @@ const scatterSeries = chart
     .setStrokeStyle(emptyLine)
     .appendJSON(data)
     .fill({ size: 3 })
-    .setMouseInteractions(false)
+    .setPointerEvents(false)
 
 // Disable conflicting built-in interactions
-chart.setMouseInteractionRectangleFit(false).setMouseInteractionRectangleZoom(false)
-chart.onSeriesBackgroundMouseDoubleClick(() => chart.forEachAxis((axis) => axis.fit(false)))
+chart.setUserInteractions({ rectangleZoom: false })
 
 // Add custom lasso polygon interaction using events API and Polygon series
-const polygonSeries = chart.addPolygonSeries({ automaticColorIndex: 2 }).setMouseInteractions(false).setCursorEnabled(false)
+const polygonSeries = chart.addPolygonSeries({ automaticColorIndex: 2 }).setPointerEvents(false).setCursorEnabled(false)
 const polygonFigure = polygonSeries.add([]).setFillStyle((fill) => fill.setA(50))
 const polygonMarkers = chart.addPointLineAreaSeries({ dataPattern: null }).setCursorEnabled(false)
 let lassoState
-chart.onSeriesBackgroundMouseMove((_, event) => {
+chart.seriesBackground.addEventListener('pointermove', (event) => {
     if (!lassoState || lassoState.closed) return
     const coordAxis = chart.translateCoordinate(event, chart.coordsAxis)
     const polygonPreview = [...lassoState.polygon, coordAxis]
     polygonFigure.setDimensions(polygonPreview)
 })
-chart.onSeriesBackgroundMouseLeave(() => {
+chart.seriesBackground.addEventListener('pointerleave', (event) => {
     if (!lassoState || lassoState.closed) return
     polygonFigure.setDimensions(lassoState.polygon)
 })
-chart.onSeriesBackgroundMouseClick((_, event) => {
+chart.seriesBackground.addEventListener('click', (event) => {
     // Add coordinate to polygon
     const coordAxis = chart.translateCoordinate(event, chart.coordsAxis)
     if (!lassoState || lassoState.closed) {
@@ -81,7 +80,7 @@ chart.onSeriesBackgroundMouseClick((_, event) => {
     polygonMarkers.appendSample(coordAxis)
     dataGrid.removeCells()
 })
-polygonMarkers.onMouseClick(() => {
+polygonMarkers.addEventListener('click', (event) => {
     // Close polygon
     lassoState.closed = true
     polygonFigure.setDimensions(lassoState.polygon)
