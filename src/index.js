@@ -27,6 +27,7 @@ const lc = lightningChart({
         })
 const chart = lc
     .ChartXY({
+        legend: { visible: false },
         container: containerChart1,
         theme: Themes[new URLSearchParams(window.location.search).get('theme') || 'darkGold'] || undefined,
     })
@@ -42,11 +43,14 @@ const dataGrid = lc
 const data = new Array(5000).fill(0).map((_, i) => ({ id: i, x: Math.random() ** 2, y: Math.random() ** 1.5 }))
 
 const scatterSeries = chart
-    .addPointLineAreaSeries({ dataPattern: null, sizes: true })
-    .setAreaFillStyle(emptyFill)
-    .setStrokeStyle(emptyLine)
-    .appendJSON(data)
-    .fill({ size: 3 })
+    .addPointSeries({
+        schema: {
+            x: { pattern: null },
+            y: { pattern: null },
+            size: { pattern: null },
+        },
+    })
+    .appendJSON(data, undefined, { size: 3 })
     .setPointerEvents(false)
 
 // Disable conflicting built-in interactions
@@ -55,7 +59,7 @@ chart.setUserInteractions({ rectangleZoom: false })
 // Add custom lasso polygon interaction using events API and Polygon series
 const polygonSeries = chart.addPolygonSeries({ automaticColorIndex: 2 }).setPointerEvents(false).setCursorEnabled(false)
 const polygonFigure = polygonSeries.add([]).setFillStyle((fill) => fill.setA(50))
-const polygonMarkers = chart.addPointLineAreaSeries({ dataPattern: null }).setCursorEnabled(false)
+const polygonMarkers = chart.addPointSeries({ schema: { x: { pattern: null }, y: { pattern: null } } }).setCursorEnabled(false)
 let lassoState
 chart.seriesBackground.addEventListener('pointermove', (event) => {
     if (!lassoState || lassoState.closed) return
@@ -107,7 +111,7 @@ polygonMarkers.addEventListener('click', (event) => {
             dataGridContent.push([sample.id, sample.x.toFixed(3), sample.y.toFixed(3)])
         }
     }
-    scatterSeries.alterSamples(0, { sizes: dataPointSizes })
+    scatterSeries.alterSamplesStartingFrom(0, { size: dataPointSizes })
     dataGrid.setTableContent(dataGridContent)
     containerChart2.style.display = 'block'
 })
